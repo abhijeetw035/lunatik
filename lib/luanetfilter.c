@@ -104,7 +104,7 @@ static inline unsigned int luanetfilter_docall(luanetfilter_t *luanf, struct sk_
 	if (likely(luanf->mark != skb->mark))
 		goto out;
 
-	lunatik_run(luanf->runtime, luanetfilter_hook_cb, ret, luanf, skb);
+	lunatik_runbh(luanf->runtime, luanetfilter_hook_cb, ret, luanf, skb);
 	return (ret < 0 || ret > NF_MAX_VERDICT) ? policy : ret;
 out:
 	return policy;
@@ -183,7 +183,7 @@ static int luanetfilter_register(lua_State *L)
 #else
 	if (nf_register_hook(nfops) != 0)
 #endif
-		luaL_error(L, "failed to register netfilter hook");
+	luaL_error(L, "failed to register netfilter hook");
 	lunatik_setruntime(L, netfilter, nf);
 	lunatik_getobject(nf->runtime);
 	lunatik_registerobject(L, 1, object);

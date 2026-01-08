@@ -39,6 +39,7 @@
 #ifdef LUNATIK_RUNTIME
 lunatik_object_t *lunatik_env;
 EXPORT_SYMBOL(lunatik_env);
+EXPORT_SYMBOL(luaS_hash);	/* required by luarcu */
 
 static inline void lunatik_setversion(lua_State *L)
 {
@@ -165,7 +166,7 @@ static int lunatik_lresume(lua_State *L)
 {
 	lua_State *Lto = lunatik_check(L, 1);
 	int nargs = lua_gettop(L) - 1;
-	int nresults;
+	int nresults = 0;
 
 	if (lunatik_copyobjects(Lto, L, 2, nargs) != LUA_OK || (nresults = lunatik_resume(Lto, L, nargs) < 0)) {
 		lua_pushfstring(L, "%s\n", lua_tostring(Lto, -1));

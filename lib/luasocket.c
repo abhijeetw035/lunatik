@@ -232,7 +232,7 @@ static int luasocket_receive(lua_State *L)
 *       if not binding to a specific protocol via other means (e.g. `socket.new`'s protocol argument for `AF_PACKET` might set this).
 *     - If `addr` is a string: It's a packed string directly representing parts of the `sockaddr_ll` structure
 *       (specifically, the fields after `sll_family`, like `sll_protocol`).
-*       Example from `tap.lua` for binding to `ETH_P_ALL` (0x0003): `sock:bind(string.pack(">H", 0x0003))`.
+*       Example from `tap.lua` for binding to `ETH_P_ALL` (0x0003): `sock:bind(string.pack(">I2", 0x0003))`.
 *   - Other families: A packed string representing the family-specific address structure.
 * @tparam[opt] integer port The local port number (required and used only if the family is `AF_INET`).
 * @treturn nil
@@ -251,7 +251,11 @@ static int luasocket_bind(lua_State *L)
 	struct socket *socket = luasocket_check(L, 1);
 	struct sockaddr_storage addr;
 	size_t size = luasocket_checkaddr(L, socket, &addr, 2);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 0))
 	lunatik_try(L, kernel_bind, socket, (struct sockaddr *)&addr, size);
+#else
+	lunatik_try(L, kernel_bind, socket, (struct sockaddr_unsized *)&addr, size);
+#endif
 	return 0;
 }
 
@@ -304,7 +308,12 @@ static int luasocket_connect(lua_State *L)
 	int nargs = lua_gettop(L);
 	size_t size = luasocket_checkaddr(L, socket, &addr, 2);
 	int flags = luaL_optinteger(L, nargs >= 4 ? 4 : 3, 0);
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 0))
 	lunatik_try(L, kernel_connect, socket, (struct sockaddr *)&addr, size, flags);
+#else
+	lunatik_try(L, kernel_connect, socket, (struct sockaddr_unsized *)&addr, size, flags);
+#endif
 	return 0;
 }
 
